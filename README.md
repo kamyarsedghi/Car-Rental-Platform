@@ -1,3 +1,65 @@
+# Car Rental Platform Test Web.Smart 
+
+## Table of Contents
+
+- [About](#about)
+- [Getting Started](#getting_started)
+- [Usage](#usage)
+- [Endpoints](#endpoints)
+
+---
+## About <a name = "about"></a>
+
+Requested by Artem Lakiza web.smart <br>
+Author: Kamyar Sedghi
+
+---
+## Getting Started <a name = "getting_started"></a>
+This project is a test for web.smart. <br>
+
+---
+## Installation <a name = "installation"></a>
+```
+$ npm install
+```
+---
+## Usage <a name = "usage"></a>
+```
+# development
+$ npm run start
+
+# watch mode
+$ npm run start:dev
+```
+---
+## Endpoints <a name = "endpoints"></a>
+```
+# Get all the reservations
+GET /reservation
+
+# Get a reservation by id
+GET /reservation/:id
+
+# Calculate rental price by number of days
+GET /reservation/price/:days
+
+# Check if a car is available for a specific date
+POST /reservation/check
+{
+    "carId": 1,
+    "startDate": "2021-01-01",
+    "endDate": "2021-01-02"
+}
+
+```
+
+
+
+
+
+
+
+
 <p align="center">
   <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
 </p>
