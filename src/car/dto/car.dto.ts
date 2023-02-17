@@ -15,4 +15,6 @@ export class CarDto {
     @IsDate()
     @Type(() => Date)
     endDate: Date;
+
+    makeReservation: boolean;
 }
