@@ -35,21 +35,34 @@ $ npm run start:dev
 ## Endpoints <a name = "endpoints"></a>
 ```
 # Get all the reservations
-GET /reservation
+GET /car
 
 # Get a reservation by id
-GET /reservation/:id
+GET /car/:id
 
 # Calculate rental price by number of days
-GET /reservation/price/:days
+GET /car/price/:days
 
 # Check if a car is available for a specific date
-POST /reservation/check
+POST /car/check
 {
     "carId": 1,
     "startDate": "2021-01-01",
     "endDate": "2021-01-02"
 }
+
+# Create a reservation
+POST /car/create
+{
+    "carId": 1,
+    "startDate": "2021-01-01",
+    "endDate": "2021-01-02",
+    "makeReservation": true
+}
+
+# Getting a specific car usage per month
+GET /car/usage/:id
+
 
 ```
 
