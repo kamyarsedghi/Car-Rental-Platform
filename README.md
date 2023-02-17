@@ -17,6 +17,16 @@ Author: Kamyar Sedghi
 ## Getting Started <a name = "getting_started"></a>
 This project is a test for web.smart. <br>
 
+Setup your environment variables in .env file. <br>
+```
+# Database
+DB_HOST
+DB_PORT
+DB_NAME
+DB_USER
+DB_PASSWORD
+DB_MAX_CONNECTIONS
+```
 ---
 ## Installation <a name = "installation"></a>
 ```
