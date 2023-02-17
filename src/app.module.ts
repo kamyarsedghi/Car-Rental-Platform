@@ -4,6 +4,8 @@ import { CarController } from './car/car.controller';
 import { CarModule } from './car/car.module';
 import { ConfigModule } from '@nestjs/config';
 import { DatabaseModule } from './utils/database/database.module';
+import { ReservationService } from './reservation/reservation.service';
+import { ReservationModule } from './reservation/reservation.module';
 
 @Module({
     imports: [
@@ -13,8 +15,9 @@ import { DatabaseModule } from './utils/database/database.module';
         }),
         CarModule,
         DatabaseModule,
+        ReservationModule,
     ],
     controllers: [CarController],
-    providers: [CarService],
+    providers: [CarService, ReservationService],
 })
 export class AppModule {}
