@@ -51,6 +51,17 @@ export class DatabaseService {
             "created_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
             "updated_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
         );`;
+
+        const query_cars = `CREATE TABLE IF NOT EXISTS "cars" (
+            "id" SERIAL PRIMARY KEY,
+            "car_id" VARCHAR(255) NOT NULL,
+            "car_name" VARCHAR(255) NOT NULL,
+            "car_license_plate" VARCHAR(255) NOT NULL,
+            "created_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            "updated_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );`;
+
         await this.executeQuery(query);
+        await this.executeQuery(query_cars);
     }
 }
