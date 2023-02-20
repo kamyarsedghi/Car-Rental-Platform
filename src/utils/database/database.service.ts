@@ -54,7 +54,7 @@ export class DatabaseService {
 
         const query_cars = `CREATE TABLE IF NOT EXISTS "cars" (
             "id" SERIAL PRIMARY KEY,
-            "car_id" VARCHAR(255) NOT NULL,
+            "car_id" INTEGER NOT NULL,
             "car_name" VARCHAR(255) NOT NULL,
             "car_license_plate" VARCHAR(255) NOT NULL,
             "created_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
