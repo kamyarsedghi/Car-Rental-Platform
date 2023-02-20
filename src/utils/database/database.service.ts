@@ -40,4 +40,17 @@ export class DatabaseService {
             return error;
         }
     }
+
+    async createTableIfNotExists(): Promise<void> {
+        const query = `CREATE TABLE IF NOT EXISTS "reservations" (
+            "id" SERIAL PRIMARY KEY,
+            "car_id" INTEGER NOT NULL,
+            "total_price" INTEGER NOT NULL,
+            "start_date" DATE NOT NULL,
+            "end_date" DATE NOT NULL,
+            "created_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            "updated_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );`;
+        await this.executeQuery(query);
+    }
 }
