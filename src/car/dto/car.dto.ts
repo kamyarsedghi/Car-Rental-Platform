@@ -1,5 +1,6 @@
 import { Type } from 'class-transformer';
-import { IsNumber, IsDate, IsNotEmpty } from 'class-validator';
+import { IsNumber, IsDate, IsNotEmpty, IsBoolean, IsOptional, Validate } from 'class-validator';
+import { IsWeekday } from './IsWeekdayCustomValidator';
 
 export class CarDto {
     @IsNotEmpty()
@@ -9,12 +10,16 @@ export class CarDto {
     @IsNotEmpty()
     @IsDate()
     @Type(() => Date)
+    @Validate(IsWeekday)
     startDate: Date;
 
     @IsNotEmpty()
     @IsDate()
     @Type(() => Date)
+    @Validate(IsWeekday)
     endDate: Date;
 
-    makeReservation: boolean;
+    @IsOptional()
+    @IsBoolean()
+    makeReservation?: boolean;
 }

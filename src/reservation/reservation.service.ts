@@ -22,10 +22,6 @@ export class ReservationService {
         const startDateRestrict = new Date(startDate),
             endDateRestrict = new Date(endDate);
 
-        if (startDate.getDay() === 0 || startDate.getDay() === 6 || endDate.getDay() === 0 || endDate.getDay() === 6) {
-            throw new BadRequestException('The car cannot be rented on weekends');
-        }
-
         if (Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 3600 * 24)) > 30) {
             throw new BadRequestException('The maximum rental period is 30 days');
         }
