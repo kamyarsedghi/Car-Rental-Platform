@@ -1,7 +1,8 @@
-import { Controller, Get, Param, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Param, ParseIntPipe, Query, UsePipes, ValidationPipe } from '@nestjs/common';
 
 import { ReservationService } from 'src/reservation/reservation.service';
 import { CarService } from './car.service';
+import { DateQueryDto } from './dto/dateQuery.dto';
 
 @Controller('car')
 export class CarController {
@@ -18,8 +19,9 @@ export class CarController {
     }
 
     @Get('usage/all')
-    async getAllCarsUsage(): Promise<object> {
-        return await this.carService.getAllCarsUsage();
+    @UsePipes(new ValidationPipe({ transform: true }))
+    async getAllCarsUsage(@Query() dateQueryDto?: DateQueryDto): Promise<object> {
+        return await this.carService.getAllCarsUsage(dateQueryDto);
     }
 
     @Get('usage/:id')

@@ -1,6 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { ReservationService } from 'src/reservation/reservation.service';
 import { DatabaseService } from 'src/utils/database/database.service';
+import { DateQueryDto } from './dto/dateQuery.dto';
 
 @Injectable()
 export class CarService {
@@ -48,12 +49,28 @@ export class CarService {
         return carUsage;
     }
 
-    async getAllCarsUsage(): Promise<object> {
+    async getAllCarsUsage(dateQueryDto?: DateQueryDto): Promise<object> {
+        const { dateFrom, dateTo } = dateQueryDto;
+
+        if (dateFrom && dateTo && dateFrom > dateTo) {
+            throw new BadRequestException('dateFrom cannot be greater than dateTo');
+        }
+        if (dateFrom && dateTo && dateFrom.getTime() === dateTo.getTime()) {
+            throw new BadRequestException('dateFrom cannot be equal to dateTo');
+        }
+        if (!dateFrom && dateTo) {
+            throw new BadRequestException('dateFrom is required');
+        } else if (dateFrom && !dateTo) {
+            throw new BadRequestException('dateTo is required');
+        }
+
         const monthName = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
-        const query = `SELECT cars.car_id, reservations.id reservation_id,car_name, car_license_plate, total_price, start_date, end_date FROM cars LEFT JOIN reservations ON cars.car_id = reservations.car_id`;
+        // const query = `SELECT cars.car_id, reservations.id reservation_id,car_name, car_license_plate, total_price, start_date, end_date FROM cars LEFT JOIN reservations ON cars.car_id = reservations.car_id`;
+        // eslint-disable-next-line prettier/prettier
+        const query2 = `SELECT cars.car_id, reservations.id reservation_id,car_name, car_license_plate, total_price, start_date, end_date FROM cars LEFT JOIN reservations ON cars.car_id = reservations.car_id WHERE start_date BETWEEN '${dateFrom?.toISOString().split('T')[0] || '1993-01-01'}' AND '${dateTo?.toISOString().split('T')[0] || '2100-12-20'}'`;
 
-        const carsData = await this.databaseService.executeQuery(query);
+        const carsData = await this.databaseService.executeQuery(query2);
 
         const allCarsUsage = carsData.rows.reduce((acc, car) => {
             const startDate = new Date(car.start_date);
