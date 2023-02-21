@@ -6,15 +6,17 @@ export class ReservationService {
     constructor(private readonly databaseService: DatabaseService) {}
 
     totalRentalPrice(days: number): number {
+        days === 0 ? (days = 1) : days;
         if (days <= 4) {
             return days * 1000;
-        } else if (days <= 9) {
-            return this.totalRentalPrice(4) + (days - 4) * (1000 * 0.95);
-        } else if (days <= 17) {
-            return this.totalRentalPrice(9) + (days - 9) * (1000 * 0.9);
-        } else if (days <= 30) {
-            return this.totalRentalPrice(17) + (days - 17) * (1000 * 0.85);
         }
+        if (days <= 9) {
+            return this.totalRentalPrice(4) + (days - 4) * (1000 * 0.95);
+        }
+        if (days <= 17) {
+            return this.totalRentalPrice(9) + (days - 9) * (1000 * 0.9);
+        }
+        return this.totalRentalPrice(17) + (days - 17) * (1000 * 0.85);
     }
 
     async checkCarAvailability(data): Promise<object> {

@@ -1,6 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { ReservationService } from 'src/reservation/reservation.service';
 import { DatabaseService } from 'src/utils/database/database.service';
+import { DateQueryDto } from './dto/dateQuery.dto';
 
 @Injectable()
 export class CarService {
@@ -48,13 +49,28 @@ export class CarService {
         return carUsage;
     }
 
-    async getAllCarsUsage(): Promise<object> {
+    async getAllCarsUsage(dateQueryDto?: DateQueryDto): Promise<object> {
+        const { dateFrom, dateTo } = dateQueryDto;
+
+        if (dateFrom && dateTo && dateFrom > dateTo) {
+            throw new BadRequestException('dateFrom cannot be greater than dateTo');
+        }
+        if (dateFrom && dateTo && dateFrom.getTime() === dateTo.getTime()) {
+            throw new BadRequestException('dateFrom cannot be equal to dateTo');
+        }
+        if (!dateFrom && dateTo) {
+            throw new BadRequestException('dateFrom is required');
+        } else if (dateFrom && !dateTo) {
+            throw new BadRequestException('dateTo is required');
+        }
+
         const monthName = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
-        //! VERY IMPORTANT QUERY - fully check it out
-        const query = `SELECT cars.car_id, reservations.id reservation_id,car_name, car_license_plate, total_price, start_date, end_date FROM cars LEFT JOIN reservations ON cars.car_id = reservations.car_id`;
+        // const query = `SELECT cars.car_id, reservations.id reservation_id,car_name, car_license_plate, total_price, start_date, end_date FROM cars LEFT JOIN reservations ON cars.car_id = reservations.car_id`;
+        // eslint-disable-next-line prettier/prettier
+        const query2 = `SELECT cars.car_id, reservations.id reservation_id,car_name, car_license_plate, total_price, start_date, end_date FROM cars LEFT JOIN reservations ON cars.car_id = reservations.car_id WHERE start_date BETWEEN '${dateFrom?.toISOString().split('T')[0] || '1993-01-01'}' AND '${dateTo?.toISOString().split('T')[0] || '2100-12-20'}'`;
 
-        const carsData = await this.databaseService.executeQuery(query);
+        const carsData = await this.databaseService.executeQuery(query2);
 
         const allCarsUsage = carsData.rows.reduce((acc, car) => {
             const startDate = new Date(car.start_date);
@@ -62,37 +78,44 @@ export class CarService {
             const days = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 3600 * 24));
             const month = startDate.getMonth();
 
-            if (acc[car.car_id]) {
-                if (acc[car.car_id].record[month]) {
-                    acc[car.car_id].record[month].days += days;
-                    acc[car.car_id].record[month].count++;
+            if (acc[monthName[month]]) {
+                if (acc[monthName[month]][car.car_id]) {
+                    acc[monthName[month]][car.car_id].days += days;
+                    acc[monthName[month]][car.car_id].count++;
                 } else {
-                    acc[car.car_id].record[month] = { days, count: 1 };
+                    acc[monthName[month]][car.car_id] = {
+                        reservation_id: car.reservation_id,
+                        name: car.car_name,
+                        license_plate: car.car_license_plate,
+                        days,
+                        count: 1,
+                    };
                 }
             } else {
-                acc[car.car_id] = { record: { [month]: { days, count: 1 } }, license_plate: car.car_license_plate, name: car.car_name };
+                acc[monthName[month]] = {
+                    [car.car_id]: {
+                        reservation_id: car.reservation_id,
+                        name: car.car_name,
+                        license_plate: car.car_license_plate,
+                        days,
+                        count: 1,
+                    },
+                };
             }
+
             return acc;
         }, {});
 
-        const allCarsUsageUpdated = {};
+        const sortedAllCarsUsage = Object.keys(allCarsUsage)
+            .sort((a, b) => {
+                return monthName.indexOf(a) - monthName.indexOf(b);
+            })
+            .reduce((accumulator, key) => {
+                accumulator[key] = allCarsUsage[key];
 
-        for (const car in allCarsUsage) {
-            allCarsUsageUpdated[car] = {};
-            allCarsUsageUpdated[car].record = {};
-            for (const month in allCarsUsage[car].record) {
-                allCarsUsage[car].record[month].percentage = ((allCarsUsage[car].record[month].days / 30) * 100).toFixed(2);
+                return accumulator;
+            }, {});
 
-                allCarsUsageUpdated[car].record[monthName[month]] = allCarsUsage[car].record[month];
-                allCarsUsageUpdated[car] = { ...allCarsUsageUpdated[car], license_plate: allCarsUsage[car].license_plate, name: allCarsUsage[car].name };
-
-                if (allCarsUsageUpdated[car].record[monthName[month]].days === 0) {
-                    allCarsUsageUpdated[car]['record'] = {};
-                    delete allCarsUsageUpdated[car].record[monthName[month]];
-                }
-            }
-        }
-
-        return allCarsUsageUpdated;
+        return sortedAllCarsUsage;
     }
 }
