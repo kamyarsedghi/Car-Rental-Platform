@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ReservationService } from 'src/reservation/reservation.service';
 import { DatabaseService } from 'src/utils/database/database.service';
 
@@ -23,11 +23,7 @@ export class CarService {
 
         const query = `SELECT * FROM reservations WHERE car_id = ${carId}`;
 
-        const carData = typeof carId === 'object' ? carId : await this.databaseService.executeQuery(query);
-
-        // if (carData.rows.length === 0) {
-        //     throw new NotFoundException('The car has not been rented or does not exist');
-        // }
+        const carData = await this.databaseService.executeQuery(query);
 
         const carUsage = carData.rows.reduce((acc, row) => {
             const startDate = new Date(row.start_date);
@@ -74,29 +70,30 @@ export class CarService {
                     acc[car.car_id].record[month] = { days, count: 1 };
                 }
             } else {
-                acc[car.car_id] = { record: { [month]: { days, count: 1 } } };
+                acc[car.car_id] = { record: { [month]: { days, count: 1 } }, license_plate: car.car_license_plate, name: car.car_name };
             }
             return acc;
         }, {});
 
+        const allCarsUsageUpdated = {};
+
         for (const car in allCarsUsage) {
+            allCarsUsageUpdated[car] = {};
+            allCarsUsageUpdated[car].record = {};
             for (const month in allCarsUsage[car].record) {
                 allCarsUsage[car].record[month].percentage = ((allCarsUsage[car].record[month].days / 30) * 100).toFixed(2);
 
-                allCarsUsage[car].license_plate = carsData.rows.find(row => row.car_id === Number(car)).car_license_plate;
-                allCarsUsage[car].name = carsData.rows.find(row => row.car_id === Number(car)).car_name;
+                allCarsUsageUpdated[car].record[monthName[month]] = allCarsUsage[car].record[month];
+                allCarsUsageUpdated[car] = { ...allCarsUsageUpdated[car], license_plate: allCarsUsage[car].license_plate, name: allCarsUsage[car].name };
 
-                allCarsUsage[car].record[monthName[month]] = allCarsUsage[car].record[month];
-                delete allCarsUsage[car].record[month];
-
-                if (allCarsUsage[car].record[monthName[month]].days === 0) {
-                    allCarsUsage[car]['record'] = {};
-                    delete allCarsUsage[car].record[monthName[month]];
+                if (allCarsUsageUpdated[car].record[monthName[month]].days === 0) {
+                    allCarsUsageUpdated[car]['record'] = {};
+                    delete allCarsUsageUpdated[car].record[monthName[month]];
                 }
             }
         }
 
-        return allCarsUsage;
+        return allCarsUsageUpdated;
     }
 
     async createTableIfNotExists(): Promise<void> {
