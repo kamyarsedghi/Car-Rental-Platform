@@ -17,6 +17,11 @@ export class CarController {
         return await this.carService.getReservationData(id);
     }
 
+    @Get('usage/all')
+    async getAllCarsUsage(): Promise<object> {
+        return await this.carService.getAllCarsUsage();
+    }
+
     @Get('usage/:id')
     async getCarUsage(@Param('id', ParseIntPipe) id: number): Promise<object> {
         return await this.carService.getCarUsage(id);
