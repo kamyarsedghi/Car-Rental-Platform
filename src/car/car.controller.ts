@@ -6,10 +6,6 @@ import { CarService } from './car.service';
 export class CarController {
     constructor(private readonly carService: CarService, private readonly reservationService: ReservationService) {}
 
-    async onModuleInit() {
-        await this.carService.createTableIfNotExists();
-    }
-
     @Get()
     async getAllReservationData() {
         return await this.carService.getAllReservationData();

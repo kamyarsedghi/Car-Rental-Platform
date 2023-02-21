@@ -6,4 +6,10 @@ import { DatabaseService } from './database.service';
     providers: [DatabaseService],
     exports: [DatabaseService],
 })
-export class DatabaseModule {}
+export class DatabaseModule {
+    constructor(private readonly DatabaseService: DatabaseService) {}
+
+    async onModuleInit() {
+        await this.DatabaseService.createTableIfNotExists();
+    }
+}
