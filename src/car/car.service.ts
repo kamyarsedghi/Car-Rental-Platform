@@ -51,7 +51,6 @@ export class CarService {
     async getAllCarsUsage(): Promise<object> {
         const monthName = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
-        //! VERY IMPORTANT QUERY - fully check it out
         const query = `SELECT cars.car_id, reservations.id reservation_id,car_name, car_license_plate, total_price, start_date, end_date FROM cars LEFT JOIN reservations ON cars.car_id = reservations.car_id`;
 
         const carsData = await this.databaseService.executeQuery(query);
@@ -62,37 +61,44 @@ export class CarService {
             const days = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 3600 * 24));
             const month = startDate.getMonth();
 
-            if (acc[car.car_id]) {
-                if (acc[car.car_id].record[month]) {
-                    acc[car.car_id].record[month].days += days;
-                    acc[car.car_id].record[month].count++;
+            if (acc[monthName[month]]) {
+                if (acc[monthName[month]][car.car_id]) {
+                    acc[monthName[month]][car.car_id].days += days;
+                    acc[monthName[month]][car.car_id].count++;
                 } else {
-                    acc[car.car_id].record[month] = { days, count: 1 };
+                    acc[monthName[month]][car.car_id] = {
+                        reservation_id: car.reservation_id,
+                        name: car.car_name,
+                        license_plate: car.car_license_plate,
+                        days,
+                        count: 1,
+                    };
                 }
             } else {
-                acc[car.car_id] = { record: { [month]: { days, count: 1 } }, license_plate: car.car_license_plate, name: car.car_name };
+                acc[monthName[month]] = {
+                    [car.car_id]: {
+                        reservation_id: car.reservation_id,
+                        name: car.car_name,
+                        license_plate: car.car_license_plate,
+                        days,
+                        count: 1,
+                    },
+                };
             }
+
             return acc;
         }, {});
 
-        const allCarsUsageUpdated = {};
+        const sortedAllCarsUsage = Object.keys(allCarsUsage)
+            .sort((a, b) => {
+                return monthName.indexOf(a) - monthName.indexOf(b);
+            })
+            .reduce((accumulator, key) => {
+                accumulator[key] = allCarsUsage[key];
 
-        for (const car in allCarsUsage) {
-            allCarsUsageUpdated[car] = {};
-            allCarsUsageUpdated[car].record = {};
-            for (const month in allCarsUsage[car].record) {
-                allCarsUsage[car].record[month].percentage = ((allCarsUsage[car].record[month].days / 30) * 100).toFixed(2);
+                return accumulator;
+            }, {});
 
-                allCarsUsageUpdated[car].record[monthName[month]] = allCarsUsage[car].record[month];
-                allCarsUsageUpdated[car] = { ...allCarsUsageUpdated[car], license_plate: allCarsUsage[car].license_plate, name: allCarsUsage[car].name };
-
-                if (allCarsUsageUpdated[car].record[monthName[month]].days === 0) {
-                    allCarsUsageUpdated[car]['record'] = {};
-                    delete allCarsUsageUpdated[car].record[monthName[month]];
-                }
-            }
-        }
-
-        return allCarsUsageUpdated;
+        return sortedAllCarsUsage;
     }
 }
