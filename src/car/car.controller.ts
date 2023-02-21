@@ -1,4 +1,5 @@
-import { Controller, Get, Param } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Post, UsePipes, ValidationPipe } from '@nestjs/common';
+
 import { ReservationService } from 'src/reservation/reservation.service';
 import { CarService } from './car.service';
 
@@ -12,12 +13,12 @@ export class CarController {
     }
 
     @Get(':id')
-    async getReservationData(@Param('id') id: number) {
+    async getReservationData(@Param('id', ParseIntPipe) id: number) {
         return await this.carService.getReservationData(id);
     }
 
     @Get('usage/:id')
-    async getCarUsage(@Param('id') id: number): Promise<object> {
+    async getCarUsage(@Param('id', ParseIntPipe) id: number): Promise<object> {
         return await this.carService.getCarUsage(id);
     }
 }
