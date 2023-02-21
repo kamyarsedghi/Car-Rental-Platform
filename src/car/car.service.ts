@@ -18,7 +18,7 @@ export class CarService {
         });
     }
 
-    async getCarUsage(carId: number | object): Promise<object> {
+    async getCarUsage(carId: number): Promise<object> {
         const monthName = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
         const query = `SELECT * FROM reservations WHERE car_id = ${carId}`;
