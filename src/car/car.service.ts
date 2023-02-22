@@ -2,6 +2,8 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { ReservationService } from 'src/reservation/reservation.service';
 import { DatabaseService } from 'src/utils/database/database.service';
 import { DateQueryDto } from './dto/dateQuery.dto';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const ObjectsToCsv = require('objects-to-csv');
 
 @Injectable()
 export class CarService {
@@ -124,6 +126,21 @@ export class CarService {
                 acc[key] = value;
                 return acc;
             }, {});
+
+        const toFile = Object.entries(sortedAllCarsUsage).map(([key, value]) => {
+            return {
+                month: key,
+                cars: Object.entries(value).map(([key, value]) => {
+                    return {
+                        car_id: key,
+                        ...value,
+                    };
+                }),
+            };
+        });
+
+        const csv = new ObjectsToCsv(toFile);
+        await csv.toDisk('./carsUsage.csv');
 
         return sortedAllCarsUsage;
     }
