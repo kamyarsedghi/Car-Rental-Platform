@@ -2,6 +2,10 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { ReservationService } from 'src/reservation/reservation.service';
 import { DatabaseService } from 'src/utils/database/database.service';
 import { DateQueryDto } from './dto/dateQuery.dto';
+import * as fs from 'fs-extra';
+import * as path from 'path';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const ObjectsToCsv = require('objects-to-csv');
 
 @Injectable()
 export class CarService {
@@ -50,7 +54,7 @@ export class CarService {
     }
 
     async getAllCarsUsage(dateQueryDto?: DateQueryDto): Promise<object> {
-        const { dateFrom = new Date('1993-01-01'), dateTo = new Date('2100-12-20') } = dateQueryDto;
+        const { dateFrom = new Date('1993-01-01'), dateTo = new Date('2100-12-20'), exportType } = dateQueryDto;
 
         if (dateFrom && dateTo && dateFrom > dateTo) {
             throw new BadRequestException('dateFrom cannot be greater than dateTo');
@@ -67,24 +71,27 @@ export class CarService {
         const allCarsUsage = carsData.rows.reduce((acc, car) => {
             const startDate = new Date(car.start_date);
             const endDate = new Date(car.end_date);
-            const days = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 3600 * 24));
+            const days = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 3600 * 24)) || 1;
             const month = startDate.getMonth();
+            const year = startDate.getFullYear();
 
-            if (acc[monthName[month]]) {
-                if (acc[monthName[month]][car.car_id]) {
-                    acc[monthName[month]][car.car_id].days += days;
-                    acc[monthName[month]][car.car_id].count++;
+            if (acc[`${monthName[month]},${year}`]) {
+                if (acc[`${monthName[month]},${year}`][car.car_id]) {
+                    acc[`${monthName[month]},${year}`][car.car_id].days += days;
+                    acc[`${monthName[month]},${year}`][car.car_id].count++;
+                    acc[`${monthName[month]},${year}`][car.car_id].percentage = ((acc[`${monthName[month]},${year}`][car.car_id].days / 30) * 100).toFixed(2);
                 } else {
-                    acc[monthName[month]][car.car_id] = {
+                    acc[`${monthName[month]},${year}`][car.car_id] = {
                         reservation_id: car.reservation_id,
                         name: car.car_name,
                         license_plate: car.car_license_plate,
                         days,
                         count: 1,
                     };
+                    acc[`${monthName[month]},${year}`][car.car_id].percentage = ((acc[`${monthName[month]},${year}`][car.car_id].days / 30) * 100).toFixed(2);
                 }
             } else {
-                acc[monthName[month]] = {
+                acc[`${monthName[month]},${year}`] = {
                     [car.car_id]: {
                         reservation_id: car.reservation_id,
                         name: car.car_name,
@@ -93,20 +100,45 @@ export class CarService {
                         count: 1,
                     },
                 };
+                acc[`${monthName[month]},${year}`][car.car_id].percentage = ((acc[`${monthName[month]},${year}`][car.car_id].days / 30) * 100).toFixed(2);
             }
 
             return acc;
         }, {});
 
-        const sortedAllCarsUsage = Object.keys(allCarsUsage)
+        const sortedAllCarsUsage = Object.entries(allCarsUsage)
             .sort((a, b) => {
-                return monthName.indexOf(a) - monthName.indexOf(b);
+                const [monthA, yearA] = a[0].split(',');
+                const [monthB, yearB] = b[0].split(',');
+                // eslint-disable-next-line prettier/prettier
+                return yearA < yearB ? -1 : yearA > yearB ? 1 : monthName.indexOf(monthA) < monthName.indexOf(monthB) ? -1 : monthName.indexOf(monthA) > monthName.indexOf(monthB) ? 1 : 0;
             })
-            .reduce((accumulator, key) => {
-                accumulator[key] = allCarsUsage[key];
-
-                return accumulator;
+            .reduce((acc, [key, value]) => {
+                acc[key] = value;
+                return acc;
             }, {});
+
+        const toFile = Object.entries(sortedAllCarsUsage).map(([key, value]) => {
+            return {
+                month: key,
+                cars: Object.entries(value).map(([key, value]) => {
+                    return {
+                        car_id: key,
+                        ...value,
+                    };
+                }),
+            };
+        });
+
+        if (exportType === 'json') {
+            const filePathJson = path.join(__dirname, '..', '../reports', `${dateFrom.toISOString().split('T')[0]}-${dateTo.toISOString().split('T')[0]}-carsUsage.json`);
+            const json = JSON.stringify(toFile);
+            fs.writeFileSync(filePathJson, json);
+        } else if (exportType === 'csv') {
+            const filePathCSV = path.join(__dirname, '..', '../reports', `${dateFrom.toISOString().split('T')[0]}-${dateTo.toISOString().split('T')[0]}-carsUsage.csv`);
+            const csv = new ObjectsToCsv(toFile);
+            await csv.toDisk(filePathCSV);
+        }
 
         return sortedAllCarsUsage;
     }
