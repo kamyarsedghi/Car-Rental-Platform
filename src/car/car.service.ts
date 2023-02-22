@@ -2,6 +2,8 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { ReservationService } from 'src/reservation/reservation.service';
 import { DatabaseService } from 'src/utils/database/database.service';
 import { DateQueryDto } from './dto/dateQuery.dto';
+import * as fs from 'fs-extra';
+import * as path from 'path';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const ObjectsToCsv = require('objects-to-csv');
 
@@ -52,7 +54,7 @@ export class CarService {
     }
 
     async getAllCarsUsage(dateQueryDto?: DateQueryDto): Promise<object> {
-        const { dateFrom = new Date('1993-01-01'), dateTo = new Date('2100-12-20') } = dateQueryDto;
+        const { dateFrom = new Date('1993-01-01'), dateTo = new Date('2100-12-20'), exportType } = dateQueryDto;
 
         if (dateFrom && dateTo && dateFrom > dateTo) {
             throw new BadRequestException('dateFrom cannot be greater than dateTo');
@@ -108,19 +110,8 @@ export class CarService {
             .sort((a, b) => {
                 const [monthA, yearA] = a[0].split(',');
                 const [monthB, yearB] = b[0].split(',');
-                if (yearA < yearB) {
-                    return -1;
-                } else if (yearA > yearB) {
-                    return 1;
-                } else {
-                    if (monthName.indexOf(monthA) < monthName.indexOf(monthB)) {
-                        return -1;
-                    } else if (monthName.indexOf(monthA) > monthName.indexOf(monthB)) {
-                        return 1;
-                    } else {
-                        return 0;
-                    }
-                }
+                // eslint-disable-next-line prettier/prettier
+                return yearA < yearB ? -1 : yearA > yearB ? 1 : monthName.indexOf(monthA) < monthName.indexOf(monthB) ? -1 : monthName.indexOf(monthA) > monthName.indexOf(monthB) ? 1 : 0;
             })
             .reduce((acc, [key, value]) => {
                 acc[key] = value;
@@ -139,8 +130,18 @@ export class CarService {
             };
         });
 
-        const csv = new ObjectsToCsv(toFile);
-        await csv.toDisk('./carsUsage.csv');
+        if (exportType === 'json') {
+            const filePathJson = path.join(__dirname, '..', '../reports', `${dateFrom.toISOString().split('T')[0]}-${dateTo.toISOString().split('T')[0]}-carsUsage.json`);
+            const json = JSON.stringify(toFile);
+            fs.writeFileSync(filePathJson, json);
+            return sortedAllCarsUsage;
+        }
+        if (exportType === 'csv') {
+            const filePathCSV = path.join(__dirname, '..', '../reports', `${dateFrom.toISOString().split('T')[0]}-${dateTo.toISOString().split('T')[0]}-carsUsage.csv`);
+            const csv = new ObjectsToCsv(toFile);
+            await csv.toDisk(filePathCSV);
+            return sortedAllCarsUsage;
+        }
 
         return sortedAllCarsUsage;
     }

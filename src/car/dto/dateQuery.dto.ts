@@ -1,5 +1,6 @@
 import { Type } from 'class-transformer';
-import { IsDate, IsOptional } from 'class-validator';
+import { IsDate, IsOptional, Validate } from 'class-validator';
+import { IsValidExportOption } from './exportOptionCustomValidator';
 
 export class DateQueryDto {
     @IsOptional()
@@ -11,4 +12,8 @@ export class DateQueryDto {
     @IsDate()
     @Type(() => Date)
     dateTo?: Date;
+
+    @IsOptional()
+    @Validate(IsValidExportOption)
+    exportType?: string;
 }
