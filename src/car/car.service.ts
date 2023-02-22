@@ -134,13 +134,10 @@ export class CarService {
             const filePathJson = path.join(__dirname, '..', '../reports', `${dateFrom.toISOString().split('T')[0]}-${dateTo.toISOString().split('T')[0]}-carsUsage.json`);
             const json = JSON.stringify(toFile);
             fs.writeFileSync(filePathJson, json);
-            return sortedAllCarsUsage;
-        }
-        if (exportType === 'csv') {
+        } else if (exportType === 'csv') {
             const filePathCSV = path.join(__dirname, '..', '../reports', `${dateFrom.toISOString().split('T')[0]}-${dateTo.toISOString().split('T')[0]}-carsUsage.csv`);
             const csv = new ObjectsToCsv(toFile);
             await csv.toDisk(filePathCSV);
-            return sortedAllCarsUsage;
         }
 
         return sortedAllCarsUsage;
