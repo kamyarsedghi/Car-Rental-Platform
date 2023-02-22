@@ -67,24 +67,27 @@ export class CarService {
         const allCarsUsage = carsData.rows.reduce((acc, car) => {
             const startDate = new Date(car.start_date);
             const endDate = new Date(car.end_date);
-            const days = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 3600 * 24));
+            const days = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 3600 * 24)) || 1;
             const month = startDate.getMonth();
+            const year = startDate.getFullYear();
 
-            if (acc[monthName[month]]) {
-                if (acc[monthName[month]][car.car_id]) {
-                    acc[monthName[month]][car.car_id].days += days;
-                    acc[monthName[month]][car.car_id].count++;
+            if (acc[`${monthName[month]},${year}`]) {
+                if (acc[`${monthName[month]},${year}`][car.car_id]) {
+                    acc[`${monthName[month]},${year}`][car.car_id].days += days;
+                    acc[`${monthName[month]},${year}`][car.car_id].count++;
+                    acc[`${monthName[month]},${year}`][car.car_id].percentage = ((acc[`${monthName[month]},${year}`][car.car_id].days / 30) * 100).toFixed(2);
                 } else {
-                    acc[monthName[month]][car.car_id] = {
+                    acc[`${monthName[month]},${year}`][car.car_id] = {
                         reservation_id: car.reservation_id,
                         name: car.car_name,
                         license_plate: car.car_license_plate,
                         days,
                         count: 1,
                     };
+                    acc[`${monthName[month]},${year}`][car.car_id].percentage = ((acc[`${monthName[month]},${year}`][car.car_id].days / 30) * 100).toFixed(2);
                 }
             } else {
-                acc[monthName[month]] = {
+                acc[`${monthName[month]},${year}`] = {
                     [car.car_id]: {
                         reservation_id: car.reservation_id,
                         name: car.car_name,
@@ -93,19 +96,33 @@ export class CarService {
                         count: 1,
                     },
                 };
+                acc[`${monthName[month]},${year}`][car.car_id].percentage = ((acc[`${monthName[month]},${year}`][car.car_id].days / 30) * 100).toFixed(2);
             }
 
             return acc;
         }, {});
 
-        const sortedAllCarsUsage = Object.keys(allCarsUsage)
+        const sortedAllCarsUsage = Object.entries(allCarsUsage)
             .sort((a, b) => {
-                return monthName.indexOf(a) - monthName.indexOf(b);
+                const [monthA, yearA] = a[0].split(',');
+                const [monthB, yearB] = b[0].split(',');
+                if (yearA < yearB) {
+                    return -1;
+                } else if (yearA > yearB) {
+                    return 1;
+                } else {
+                    if (monthName.indexOf(monthA) < monthName.indexOf(monthB)) {
+                        return -1;
+                    } else if (monthName.indexOf(monthA) > monthName.indexOf(monthB)) {
+                        return 1;
+                    } else {
+                        return 0;
+                    }
+                }
             })
-            .reduce((accumulator, key) => {
-                accumulator[key] = allCarsUsage[key];
-
-                return accumulator;
+            .reduce((acc, [key, value]) => {
+                acc[key] = value;
+                return acc;
             }, {});
 
         return sortedAllCarsUsage;
