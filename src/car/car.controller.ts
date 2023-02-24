@@ -41,7 +41,7 @@ export class CarController {
     }
 
     @ApiOkResponse({
-        description: 'Getting a single reservation record providing the car id',
+        description: 'Getting a single reservation record providing the id of that reservation',
         schema: {
             example: {
                 id: 1,
@@ -57,7 +57,7 @@ export class CarController {
     @ApiParam({
         name: 'id',
         required: true,
-        description: 'The id of the car',
+        description: 'The id of the reservation',
         type: Number,
     })
     @Get(':id')
