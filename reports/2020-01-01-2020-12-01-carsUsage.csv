@@ -1,0 +1,5 @@
+month,cars
+"January,2020","[{""car_id"":""1"",""reservation_id"":8,""name"":""BMW"",""license_plate"":""CC333CC"",""days"":18,""count"":4,""percentage"":""60.00""}]"
+"February,2020","[{""car_id"":""1"",""reservation_id"":9,""name"":""BMW"",""license_plate"":""CC333CC"",""days"":5,""count"":1,""percentage"":""16.67""},{""car_id"":""2"",""reservation_id"":10,""name"":""Audi"",""license_plate"":""BB222BB"",""days"":7,""count"":1,""percentage"":""23.33""}]"
+"May,2020","[{""car_id"":""1"",""reservation_id"":4,""name"":""BMW"",""license_plate"":""CC333CC"",""days"":10,""count"":2,""percentage"":""33.33""},{""car_id"":""2"",""reservation_id"":3,""name"":""Audi"",""license_plate"":""BB222BB"",""days"":4,""count"":1,""percentage"":""13.33""}]"
+"July,2020","[{""car_id"":""2"",""reservation_id"":2,""name"":""Audi"",""license_plate"":""BB222BB"",""days"":7,""count"":1,""percentage"":""23.33""}]"
