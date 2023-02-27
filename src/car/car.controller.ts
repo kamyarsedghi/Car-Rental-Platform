@@ -3,13 +3,14 @@ import { Controller, Get, Param, ParseIntPipe, Query, UsePipes, ValidationPipe }
 import { ReservationService } from 'src/reservation/reservation.service';
 import { CarService } from './car.service';
 import { DateQueryDto } from './dto/dateQuery.dto';
-import { ApiOkResponse, ApiParam } from '@nestjs/swagger';
+import { ApiOkResponse, ApiParam, ApiBadRequestResponse, ApiTags } from '@nestjs/swagger';
 
 // @ApiExtraModels(DateQueryDto) or pass it on swagger module
 @Controller('car')
 export class CarController {
     constructor(private readonly carService: CarService, private readonly reservationService: ReservationService) {}
 
+    @ApiTags('Car')
     @ApiOkResponse({
         description: 'All cars reservation records',
         schema: {
@@ -40,6 +41,7 @@ export class CarController {
         return await this.carService.getAllReservationData();
     }
 
+    @ApiTags('Car')
     @ApiOkResponse({
         description: 'Getting a single reservation record providing the id of that reservation',
         schema: {
@@ -54,6 +56,20 @@ export class CarController {
             },
         },
     })
+    @ApiBadRequestResponse({
+        description: 'The id of the reservation is not valid',
+        content: {
+            'application/json': {
+                schema: {
+                    example: {
+                        statusCode: 400,
+                        message: 'Validation failed (numeric string is expected)',
+                        error: 'Bad Request',
+                    },
+                },
+            },
+        },
+    })
     @ApiParam({
         name: 'id',
         required: true,
@@ -65,6 +81,7 @@ export class CarController {
         return await this.carService.getReservationData(id);
     }
 
+    @ApiTags('Car')
     @ApiOkResponse({
         description: 'All reservations records between the specified dates sorted by the month and the year',
         // type: DateQueryDto,
@@ -113,12 +130,27 @@ export class CarController {
     //     description: 'The end date of the reservation',
     //     type: String,
     // })
+    @ApiBadRequestResponse({
+        description: 'The dateFrom or the dateTo or the exportType is not valid; every error message is in the example below.',
+        content: {
+            'application/json': {
+                schema: {
+                    example: {
+                        statusCode: 400,
+                        message: ['dateFrom must be a Date instance', 'dateTo must be a Date instance', 'Options only can be json or csv'],
+                        error: 'Bad Request',
+                    },
+                },
+            },
+        },
+    })
     @Get('usage/all')
     @UsePipes(new ValidationPipe({ transform: true }))
     async getAllCarsUsage(@Query() dateQueryDto?: DateQueryDto): Promise<object> {
         return await this.carService.getAllCarsUsage(dateQueryDto);
     }
 
+    @ApiTags('Car')
     @ApiOkResponse({
         description: 'All the reservation record of a specific car.',
         schema: {
@@ -137,6 +169,20 @@ export class CarController {
                     days: 10,
                     count: 2,
                     percentage: '33.33',
+                },
+            },
+        },
+    })
+    @ApiBadRequestResponse({
+        description: 'The id of the car is not valid',
+        content: {
+            'application/json': {
+                schema: {
+                    example: {
+                        statusCode: 400,
+                        message: 'Validation failed (numeric string is expected)',
+                        error: 'Bad Request',
+                    },
                 },
             },
         },

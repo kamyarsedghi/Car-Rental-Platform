@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsNumber, IsDate, IsNotEmpty, IsBoolean, IsOptional, Validate } from 'class-validator';
+import { IsNumber, IsDate, IsNotEmpty, IsBoolean, IsOptional, Validate, IsDefined } from 'class-validator';
 import { IsWeekday } from './IsWeekdayCustomValidator';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -10,6 +10,7 @@ export class CarDto {
     })
     @IsNotEmpty()
     @IsNumber()
+    @IsDefined()
     carId: number;
 
     @ApiProperty({
@@ -20,6 +21,7 @@ export class CarDto {
     @IsDate()
     @Type(() => Date)
     @Validate(IsWeekday)
+    @IsDefined()
     startDate: Date;
 
     @ApiProperty({
@@ -30,6 +32,7 @@ export class CarDto {
     @IsDate()
     @Type(() => Date)
     @Validate(IsWeekday)
+    @IsDefined()
     endDate: Date;
 
     @ApiProperty({

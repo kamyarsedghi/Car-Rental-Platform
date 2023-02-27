@@ -12,7 +12,7 @@ async function bootstrap() {
         .setTitle('Car Rental Platform API')
         .setDescription('The endoints for the Car Rental Platform API')
         .setVersion('1.0')
-        .addTag('Car Rental Platform API Tag')
+        // .addTag('Car Rental Platform API Tag')
         .build();
 
     const options: SwaggerDocumentOptions = {
