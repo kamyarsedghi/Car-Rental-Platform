@@ -35,8 +35,21 @@ services:
     networks:
       - prvNetwork
 
+  redis:
+    container_name: redis-cache
+    image: redis:latest
+    ports:
+      - 6379:6379
+    volumes:
+      - redis:/data
+    networks:
+      - prvNetwork
+
 volumes:
   postgres:
+
+  redis:
+    driver: local
 
 networks:
   prvNetwork:

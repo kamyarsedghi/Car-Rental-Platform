@@ -1,14 +1,17 @@
-import { Controller, Get, Param, ParseIntPipe, Query, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Controller, Get, Param, ParseIntPipe, Query, UsePipes, ValidationPipe, CACHE_MANAGER, Inject, UseInterceptors, CacheInterceptor, CacheKey } from '@nestjs/common';
 
 import { ReservationService } from 'src/reservation/reservation.service';
 import { CarService } from './car.service';
 import { DateQueryDto } from './dto/dateQuery.dto';
 import { ApiOkResponse, ApiParam, ApiBadRequestResponse, ApiTags } from '@nestjs/swagger';
 
+import { Cache } from 'cache-manager';
+// import { HttpCacheInterceptor } from 'src/utils/CacheAdjustTracking.service';
+
 // @ApiExtraModels(DateQueryDto) or pass it on swagger module
 @Controller('car')
 export class CarController {
-    constructor(private readonly carService: CarService, private readonly reservationService: ReservationService) {}
+    constructor(private readonly carService: CarService, private readonly reservationService: ReservationService, @Inject(CACHE_MANAGER) private cacheManager: Cache) {}
 
     @ApiTags('Car')
     @ApiOkResponse({
@@ -37,7 +40,11 @@ export class CarController {
         },
     })
     @Get()
+    @UseInterceptors(CacheInterceptor)
+    @CacheKey('carsss')
     async getAllReservationData() {
+        // await this.cacheManager.set('test', 'Value from cache');
+        console.log('Cached:', await this.cacheManager.store.keys());
         return await this.carService.getAllReservationData();
     }
 

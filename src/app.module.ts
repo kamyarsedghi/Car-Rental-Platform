@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, CacheModule } from '@nestjs/common';
 import { CarService } from './car/car.service';
 import { CarController } from './car/car.controller';
 import { CarModule } from './car/car.module';
@@ -9,6 +9,7 @@ import { ReservationModule } from './reservation/reservation.module';
 
 @Module({
     imports: [
+        CacheModule.register(),
         ConfigModule.forRoot({
             envFilePath: '.env',
             isGlobal: true,
