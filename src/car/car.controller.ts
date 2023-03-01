@@ -1,17 +1,15 @@
-import { Controller, Get, Param, ParseIntPipe, Query, UsePipes, ValidationPipe, CACHE_MANAGER, Inject, UseInterceptors, CacheInterceptor, CacheKey } from '@nestjs/common';
+import { Controller, Get, Param, ParseIntPipe, Query, UsePipes, ValidationPipe } from '@nestjs/common';
 
 import { ReservationService } from 'src/reservation/reservation.service';
 import { CarService } from './car.service';
 import { DateQueryDto } from './dto/dateQuery.dto';
 import { ApiOkResponse, ApiParam, ApiBadRequestResponse, ApiTags } from '@nestjs/swagger';
-
-import { Cache } from 'cache-manager';
-// import { HttpCacheInterceptor } from 'src/utils/CacheAdjustTracking.service';
+import { RedisService } from 'src/utils/redis/redis.service';
 
 // @ApiExtraModels(DateQueryDto) or pass it on swagger module
 @Controller('car')
 export class CarController {
-    constructor(private readonly carService: CarService, private readonly reservationService: ReservationService, @Inject(CACHE_MANAGER) private cacheManager: Cache) {}
+    constructor(private readonly carService: CarService, private readonly reservationService: ReservationService, private readonly redisService: RedisService) {}
 
     @ApiTags('Car')
     @ApiOkResponse({
@@ -40,14 +38,9 @@ export class CarController {
         },
     })
     @Get()
-    @UseInterceptors(CacheInterceptor)
-    // @CacheKey('all-res-data')
     async getAllReservationData() {
-        // const data = await this.carService.getAllReservationData();
-        // await this.cacheManager.set('/car', data);
-        // console.log('Cached:', await this.cacheManager.store.get('/car'));
-        console.log('Time:', new Date().toISOString(), ' - Getting all reservation data');
-        return await this.carService.getAllReservationData();
+        const cached = await this.redisService.get('/car');
+        return cached ? cached : await this.carService.getAllReservationData();
     }
 
     @ApiTags('Car')
@@ -85,8 +78,6 @@ export class CarController {
         description: 'The id of the reservation',
         type: Number,
     })
-    // @UseInterceptors(CacheInterceptor)
-    // @CacheKey('all-car-data')
     @Get(':id')
     async getReservationData(@Param('id', ParseIntPipe) id: number) {
         return await this.carService.getReservationData(id);

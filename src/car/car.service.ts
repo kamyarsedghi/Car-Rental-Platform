@@ -4,17 +4,18 @@ import { DatabaseService } from 'src/utils/database/database.service';
 import { DateQueryDto } from './dto/dateQuery.dto';
 import * as fs from 'fs-extra';
 import * as path from 'path';
+import { RedisService } from 'src/utils/redis/redis.service';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const ObjectsToCsv = require('objects-to-csv');
 
 @Injectable()
 export class CarService {
-    constructor(private readonly databaseService: DatabaseService, private readonly reservationService: ReservationService) {}
+    constructor(private readonly databaseService: DatabaseService, private readonly reservationService: ReservationService, private readonly redisService: RedisService) {}
 
     async getAllReservationData(): Promise<object> {
-        return await this.databaseService.executeQuery('SELECT * FROM reservations').then(result => {
-            return result.rows;
-        });
+        const result = await this.databaseService.executeQuery('SELECT * FROM reservations');
+        await this.redisService.set('/car', result.rows, 5);
+        return result.rows;
     }
 
     async getReservationData(id: number): Promise<object> {
