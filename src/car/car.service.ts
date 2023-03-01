@@ -25,39 +25,52 @@ export class CarService {
     }
 
     async getReservationData(id: number): Promise<object> {
-        return await this.databaseService.executeQuery(`SELECT * FROM reservations WHERE id = ${id}`).then(result => {
-            return result.rows[0];
-        });
+        const result = await this.redisService.getOrSet(
+            `/car/${id}`,
+            async () => {
+                const result = await this.databaseService.executeQuery(`SELECT * FROM reservations WHERE id = ${id}`);
+                return result.rows[0];
+            },
+            10,
+        );
+        return result;
     }
 
     async getCarUsage(carId: number): Promise<object> {
-        const monthName = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+        const result = await this.redisService.getOrSet(
+            `/car/usage/${carId}`,
+            async () => {
+                const monthName = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
-        const query = `SELECT * FROM reservations WHERE car_id = ${carId}`;
+                const query = `SELECT * FROM reservations WHERE car_id = ${carId}`;
 
-        const carData = await this.databaseService.executeQuery(query);
+                const carData = await this.databaseService.executeQuery(query);
 
-        const carUsage = carData.rows.reduce((acc, row) => {
-            const startDate = new Date(row.start_date);
-            const endDate = new Date(row.end_date);
-            const days = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 3600 * 24));
-            const month = startDate.getMonth();
-            if (acc[month]) {
-                acc[month].days += days;
-                acc[month].count++;
-            } else {
-                acc[month] = { days, count: 1 };
-            }
-            return acc;
-        }, {});
+                const carUsage = carData.rows.reduce((acc, row) => {
+                    const startDate = new Date(row.start_date);
+                    const endDate = new Date(row.end_date);
+                    const days = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 3600 * 24));
+                    const month = startDate.getMonth();
+                    if (acc[month]) {
+                        acc[month].days += days;
+                        acc[month].count++;
+                    } else {
+                        acc[month] = { days, count: 1 };
+                    }
+                    return acc;
+                }, {});
 
-        for (const month in carUsage) {
-            carUsage[month].percentage = ((carUsage[month].days / 30) * 100).toFixed(2);
-            carUsage[monthName[month]] = carUsage[month];
-            delete carUsage[month];
-        }
+                for (const month in carUsage) {
+                    carUsage[month].percentage = ((carUsage[month].days / 30) * 100).toFixed(2);
+                    carUsage[monthName[month]] = carUsage[month];
+                    delete carUsage[month];
+                }
 
-        return carUsage;
+                return carUsage;
+            },
+            10,
+        );
+        return result;
     }
 
     async getAllCarsUsage(dateQueryDto?: DateQueryDto): Promise<object> {
