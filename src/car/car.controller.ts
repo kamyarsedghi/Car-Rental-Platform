@@ -39,8 +39,7 @@ export class CarController {
     })
     @Get()
     async getAllReservationData() {
-        const cached = await this.redisService.get('/car');
-        return cached ? cached : await this.carService.getAllReservationData();
+        return await this.carService.getAllReservationData();
     }
 
     @ApiTags('Car')

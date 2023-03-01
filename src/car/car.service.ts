@@ -13,9 +13,15 @@ export class CarService {
     constructor(private readonly databaseService: DatabaseService, private readonly reservationService: ReservationService, private readonly redisService: RedisService) {}
 
     async getAllReservationData(): Promise<object> {
-        const result = await this.databaseService.executeQuery('SELECT * FROM reservations');
-        await this.redisService.set('/car', result.rows, 5);
-        return result.rows;
+        const result = await this.redisService.getOrSet(
+            '/car',
+            async () => {
+                const result = await this.databaseService.executeQuery('SELECT * FROM reservations');
+                return result.rows;
+            },
+            10,
+        );
+        return result;
     }
 
     async getReservationData(id: number): Promise<object> {

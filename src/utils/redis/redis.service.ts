@@ -57,12 +57,16 @@ export class RedisService {
         });
     }
 
-    async set(key: string, value: string | object, ttl?: number) {
-        await this.client.set(key, JSON.stringify(value));
-        ttl ? await this.client.expire(key, ttl) : null;
-    }
-
-    get(key: string) {
-        return this.client.get(key);
+    async getOrSet(key: string, cb: () => Promise<any>, ttl?: number) {
+        const data = await this.client.get(key);
+        if (data) {
+            return JSON.parse(data);
+        } else {
+            console.log('Cache miss');
+            const result = await cb();
+            await this.client.set(key, JSON.stringify(result));
+            ttl ? await this.client.expire(key, ttl) : null;
+            return result;
+        }
     }
 }
