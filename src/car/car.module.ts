@@ -7,18 +7,19 @@ import { CarController } from './car.controller';
 import { CarService } from './car.service';
 // import { HttpCacheInterceptor } from 'src/utils/CacheAdjustTracking.service';
 // import { APP_INTERCEPTOR } from '@nestjs/core';
-import type { RedisClientOptions } from 'redis';
+// import type { RedisClientOptions } from 'redis';
 import * as redisStore from 'cache-manager-redis-store';
 
 @Module({
     imports: [
         DatabaseModule,
         ReservationModule,
-        CacheModule.register<RedisClientOptions>({
-            // ttl: 15000,
+        CacheModule.register({
+            isGlobal: true,
+            ttl: 5,
             store: redisStore,
-            host: process.env.REDIS_HOST,
-            port: process.env.REDIS_PORT,
+            host: 'redis',
+            port: 6379,
         }),
     ],
     controllers: [CarController],

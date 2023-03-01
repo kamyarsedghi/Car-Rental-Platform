@@ -41,10 +41,12 @@ export class CarController {
     })
     @Get()
     @UseInterceptors(CacheInterceptor)
-    @CacheKey('carsss')
+    // @CacheKey('all-res-data')
     async getAllReservationData() {
-        // await this.cacheManager.set('test', 'Value from cache');
-        console.log('Cached:', await this.cacheManager.store.keys());
+        // const data = await this.carService.getAllReservationData();
+        // await this.cacheManager.set('/car', data);
+        // console.log('Cached:', await this.cacheManager.store.get('/car'));
+        console.log('Time:', new Date().toISOString(), ' - Getting all reservation data');
         return await this.carService.getAllReservationData();
     }
 
@@ -83,6 +85,8 @@ export class CarController {
         description: 'The id of the reservation',
         type: Number,
     })
+    @UseInterceptors(CacheInterceptor)
+    // @CacheKey('all-car-data')
     @Get(':id')
     async getReservationData(@Param('id', ParseIntPipe) id: number) {
         return await this.carService.getReservationData(id);
