@@ -85,7 +85,7 @@ export class CarController {
         description: 'The id of the reservation',
         type: Number,
     })
-    @UseInterceptors(CacheInterceptor)
+    // @UseInterceptors(CacheInterceptor)
     // @CacheKey('all-car-data')
     @Get(':id')
     async getReservationData(@Param('id', ParseIntPipe) id: number) {
