@@ -23,13 +23,12 @@ export class CarService {
             '/car',
             async () => {
                 const result = await this.databaseService.executeQuery('SELECT * FROM reservations');
-                // this.rmqService.send('rabbit-mq-producer', result.rows);
+                // const msResponse = await this.rmqService.send('save-to-file', result.rows);
+                // console.log('Microservice response:', msResponse);
                 return result.rows;
             },
             10,
         );
-        // this.client.send('car', result);
-        // this.rmqService.send('car', 'hello');
         return result;
     }
 
@@ -168,6 +167,18 @@ export class CarService {
             const csv = new ObjectsToCsv(toFile);
             await csv.toDisk(filePathCSV);
         }
+
+        const msResponse = await this.rmqService.send('save-to-file', {
+            dateFrom,
+            dateTo,
+            exportType,
+            sortedAllCarsUsage,
+        });
+        console.log('Microservice response:', msResponse);
+        // await this.rmqService.send('save-to-file', {
+        //     exportType,
+        //     sortedAllCarsUsage,
+        // });
 
         return sortedAllCarsUsage;
     }
