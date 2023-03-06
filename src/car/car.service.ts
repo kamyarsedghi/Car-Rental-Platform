@@ -5,22 +5,31 @@ import { DateQueryDto } from './dto/dateQuery.dto';
 import * as fs from 'fs-extra';
 import * as path from 'path';
 import { RedisService } from 'src/utils/redis/redis.service';
+import { RmqService } from 'src/utils/rmq/rmq.service';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const ObjectsToCsv = require('objects-to-csv');
 
 @Injectable()
 export class CarService {
-    constructor(private readonly databaseService: DatabaseService, private readonly reservationService: ReservationService, private readonly redisService: RedisService) {}
+    constructor(
+        private readonly databaseService: DatabaseService,
+        private readonly reservationService: ReservationService,
+        private readonly redisService: RedisService,
+        private readonly rmqService: RmqService,
+    ) {}
 
     async getAllReservationData(): Promise<object> {
         const result = await this.redisService.getOrSet(
             '/car',
             async () => {
                 const result = await this.databaseService.executeQuery('SELECT * FROM reservations');
+                // this.rmqService.send('rabbit-mq-producer', result.rows);
                 return result.rows;
             },
             10,
         );
+        // this.client.send('car', result);
+        // this.rmqService.send('car', 'hello');
         return result;
     }
 

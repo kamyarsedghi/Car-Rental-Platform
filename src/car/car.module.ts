@@ -6,9 +6,10 @@ import { DatabaseService } from 'src/utils/database/database.service';
 import { CarController } from './car.controller';
 import { CarService } from './car.service';
 import { RedisModule } from 'src/utils/redis/redis.module';
+import { RmqModule } from 'src/utils/rmq/rmq.module';
 
 @Module({
-    imports: [DatabaseModule, ReservationModule, RedisModule],
+    imports: [DatabaseModule, ReservationModule, RedisModule, RmqModule],
     controllers: [CarController],
     providers: [CarService, DatabaseService, ReservationService],
     exports: [CarService],

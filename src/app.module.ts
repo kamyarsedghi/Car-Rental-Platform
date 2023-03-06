@@ -7,6 +7,7 @@ import { DatabaseModule } from './utils/database/database.module';
 import { ReservationService } from './reservation/reservation.service';
 import { ReservationModule } from './reservation/reservation.module';
 import { RedisModule } from './utils/redis/redis.module';
+import { RmqModule } from './utils/rmq/rmq.module';
 
 @Module({
     imports: [
@@ -18,6 +19,7 @@ import { RedisModule } from './utils/redis/redis.module';
         DatabaseModule,
         ReservationModule,
         RedisModule,
+        RmqModule,
     ],
     controllers: [CarController],
     providers: [CarService, ReservationService],

@@ -1,3 +1,4 @@
+version: "3.8"
 services:
   api: # The name of the service
     build:
@@ -8,6 +9,8 @@ services:
       target: development
     depends_on:
       - postgres
+      - redis
+      - rabbitmq3
     # environment:
     #   - DATABASE_URL=value
     volumes:
@@ -45,14 +48,17 @@ services:
     # networks:
     #   - prvNetwork
 
-  # redis-commander:
-  #   container_name: redis-commander
-  #   hostname: redis-commander
-  #   image: ghcr.io/joeferner/redis-commander:latest
-  #   environment:
-  #     - REDIS_HOSTS=redis:6379
-  #   ports:
-  #     - "8081:8081"
+  rabbitmq3:
+      container_name: "rabbitmq"
+      image: rabbitmq:3.8-management-alpine
+      environment:
+          - RABBITMQ_DEFAULT_USER=user
+          - RABBITMQ_DEFAULT_PASS=password
+      ports:
+          # AMQP protocol port
+          - '5672:5672'
+          # HTTP management UI
+          - '15672:15672'
 
 volumes:
   postgres:
