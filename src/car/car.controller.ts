@@ -5,11 +5,21 @@ import { CarService } from './car.service';
 import { DateQueryDto } from './dto/dateQuery.dto';
 import { ApiOkResponse, ApiParam, ApiBadRequestResponse, ApiTags } from '@nestjs/swagger';
 import { RedisService } from 'src/utils/redis/redis.service';
+import { Client, Ctx, MessagePattern, Payload, RmqContext, Transport } from '@nestjs/microservices';
 
 // @ApiExtraModels(DateQueryDto) or pass it on swagger module
 @Controller('car')
 export class CarController {
     constructor(private readonly carService: CarService, private readonly reservationService: ReservationService, private readonly redisService: RedisService) {}
+
+    @MessagePattern('hello')
+    async hello(@Payload() data: string[], @Ctx() context: RmqContext) {
+        const channel = context.getChannelRef();
+        const orginalMessage = context.getMessage();
+        console.log('Received message:', data);
+        channel.ack(orginalMessage);
+        return 'Hello from car service';
+    }
 
     @ApiTags('Car')
     @ApiOkResponse({
@@ -41,6 +51,14 @@ export class CarController {
     async getAllReservationData() {
         return await this.carService.getAllReservationData();
     }
+
+    // @ApiTags('Car')
+    // @ApiOkResponse({})
+    // @ApiBadRequestResponse({})
+    // @Get('faker-cars')
+    // async addFakerCars(): Promise<void> {
+    //     return await this.carService.addFakerCars();
+    // }
 
     @ApiTags('Car')
     @ApiOkResponse({
@@ -192,4 +210,13 @@ export class CarController {
     async getCarUsage(@Param('id', ParseIntPipe) id: number): Promise<object> {
         return await this.carService.getCarUsage(id);
     }
+
+    // @ApiTags('Car')
+    // @ApiOkResponse({})
+    // @ApiBadRequestResponse({})
+    // @UseInterceptors(FileInterceptor('file', multerOptions))
+    // @Post('import-cars')
+    // async addCars(@UploadedFile() file: Express.Multer.File): Promise<void> {
+    //     return await this.carService.addCars(file);
+    // }
 }

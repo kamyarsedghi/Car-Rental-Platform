@@ -1,13 +1,14 @@
+/* eslint-disable @typescript-eslint/no-var-requires */
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ReservationService } from 'src/reservation/reservation.service';
 import { DatabaseService } from 'src/utils/database/database.service';
 import { DateQueryDto } from './dto/dateQuery.dto';
 import * as fs from 'fs-extra';
-import * as path from 'path';
 import { RedisService } from 'src/utils/redis/redis.service';
 import { RmqService } from 'src/utils/rmq/rmq.service';
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const ObjectsToCsv = require('objects-to-csv');
+import { faker } from '@faker-js/faker';
+
+const csvWriter = require('csv-write-stream');
 
 @Injectable()
 export class CarService {
@@ -146,28 +147,6 @@ export class CarService {
                 return acc;
             }, {});
 
-        const toFile = Object.entries(sortedAllCarsUsage).map(([key, value]) => {
-            return {
-                month: key,
-                cars: Object.entries(value).map(([key, value]) => {
-                    return {
-                        car_id: key,
-                        ...value,
-                    };
-                }),
-            };
-        });
-
-        if (exportType === 'json') {
-            const filePathJson = path.join(__dirname, '..', '../reports', `${dateFrom.toISOString().split('T')[0]}-${dateTo.toISOString().split('T')[0]}-carsUsage.json`);
-            const json = JSON.stringify(toFile);
-            fs.writeFileSync(filePathJson, json);
-        } else if (exportType === 'csv') {
-            const filePathCSV = path.join(__dirname, '..', '../reports', `${dateFrom.toISOString().split('T')[0]}-${dateTo.toISOString().split('T')[0]}-carsUsage.csv`);
-            const csv = new ObjectsToCsv(toFile);
-            await csv.toDisk(filePathCSV);
-        }
-
         const msResponse = await this.rmqService.send('save-to-file', {
             dateFrom,
             dateTo,
@@ -181,5 +160,20 @@ export class CarService {
         // });
 
         return sortedAllCarsUsage;
+    }
+
+    async addFakerCars(): Promise<void> {
+        //fakerjs add 1000 cars with car_id, car_name, car_license_plate to file
+        const writer = csvWriter({ headers: ['car_id', 'car_name', 'car_license_plate'] });
+        const writableStream = fs.createWriteStream('cars.csv');
+        writer.pipe(writableStream);
+        for (let i = 0; i < 1000; i++) {
+            writer.write({
+                car_id: i,
+                car_name: faker.vehicle.model(),
+                car_license_plate: faker.vehicle.vrm(),
+            });
+        }
+        writer.end();
     }
 }

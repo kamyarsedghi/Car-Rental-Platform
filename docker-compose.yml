@@ -15,6 +15,7 @@ services:
     #   - DATABASE_URL=value
     volumes:
       - .:/usr/src/app
+      # - ./uploads/:/usr/src/app/uploads
     env_file:
     - .env
     # Run a command against the development stage of the image

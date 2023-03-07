@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import { SwaggerModule, DocumentBuilder, SwaggerDocumentOptions } from '@nestjs/swagger';
 import { DateQueryDto } from './car/dto/dateQuery.dto';
 import { ConfigService } from '@nestjs/config';
+import { Transport } from '@nestjs/microservices';
 
 async function bootstrap() {
     const configService = new ConfigService();
@@ -23,6 +24,20 @@ async function bootstrap() {
 
     const document = SwaggerModule.createDocument(app, config, options);
     SwaggerModule.setup('api', app, document);
+
+    const microserviceRabbitMQ = app.connectMicroservice({
+        transport: Transport.RMQ,
+        options: {
+            urls: ['amqp://user:password@rabbitmq:5672'],
+            queue: 'CloudRMQ',
+            // false = manual acknowledgement; true = automatic acknowledgment
+            noAck: false,
+            // Get one by one
+            prefetchCount: 1,
+        },
+    });
+
+    await app.startAllMicroservices();
 
     await app.listen(configService.get('APP_PORT'));
 }
