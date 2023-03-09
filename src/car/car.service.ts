@@ -186,6 +186,17 @@ export class CarService {
             .map(car => `('${car[0]}', '${car[1]}', '${car[2]}')`)
             .join(',');
         // return { ready: true };
-        return data.done ? { status: 'Import DONE' } : await this.databaseService.executeQuery(`${query}${values}`);
+        try {
+            if (data.done) {
+                if (data.list.length) {
+                    await this.databaseService.executeQuery(`${query}${values}`);
+                }
+                return { status: 'Import DONE' };
+            }
+            await this.databaseService.executeQuery(`${query}${values}`);
+        } catch (error) {
+            console.log(error);
+            return { status: 'Import FAILED' };
+        }
     }
 }
