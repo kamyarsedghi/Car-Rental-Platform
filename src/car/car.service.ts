@@ -187,15 +187,8 @@ export class CarService {
             .join(',');
         // return { ready: true };
         try {
-            if (data.done) {
-                if (data.list.length) {
-                    await this.databaseService.executeQuery(`${query}${values}`);
-                }
-                return { status: 'Import DONE' };
-            }
-            await this.databaseService.executeQuery(`${query}${values}`);
+            return data.list.length ? await this.databaseService.executeQuery(`${query}${values}`) : { status: 'Import DONE' };
         } catch (error) {
-            console.log(error);
             return { status: 'Import FAILED' };
         }
     }
