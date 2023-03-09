@@ -7,6 +7,7 @@ import * as fs from 'fs-extra';
 import { RedisService } from 'src/utils/redis/redis.service';
 import { RmqService } from 'src/utils/rmq/rmq.service';
 import { faker } from '@faker-js/faker';
+import { AddCarsDto } from './dto/addCars.dto';
 
 const csvWriter = require('csv-write-stream');
 
@@ -167,7 +168,7 @@ export class CarService {
         const writer = csvWriter({ headers: ['car_id', 'car_name', 'car_license_plate'] });
         const writableStream = fs.createWriteStream('cars.csv');
         writer.pipe(writableStream);
-        for (let i = 0; i < 1000; i++) {
+        for (let i = 1; i <= 1000; i++) {
             writer.write({
                 car_id: i,
                 car_name: faker.vehicle.model(),
@@ -175,5 +176,16 @@ export class CarService {
             });
         }
         writer.end();
+    }
+
+    async importCarsIntoDB(data: AddCarsDto): Promise<object> {
+        // const query = `COPY cars (car_id, car_name, car_license_plate) FROM '${__dirname}/cars.csv' DELIMITER ',' CSV HEADER`;
+        const query = `INSERT INTO cars (car_id, car_name, car_license_plate) VALUES `;
+        const values = data.list
+            .map(car => Object.values(car))
+            .map(car => `('${car[0]}', '${car[1]}', '${car[2]}')`)
+            .join(',');
+        // return { ready: true };
+        return data.done ? { status: 'Import DONE' } : await this.databaseService.executeQuery(`${query}${values}`);
     }
 }

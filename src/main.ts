@@ -29,14 +29,13 @@ async function bootstrap() {
         transport: Transport.RMQ,
         options: {
             urls: ['amqp://user:password@rabbitmq:5672'],
-            queue: 'CloudRMQ',
+            queue: 'the-main-queue',
             // false = manual acknowledgement; true = automatic acknowledgment
             noAck: false,
             // Get one by one
             prefetchCount: 1,
         },
     });
-
     await app.startAllMicroservices();
 
     await app.listen(configService.get('APP_PORT'));
