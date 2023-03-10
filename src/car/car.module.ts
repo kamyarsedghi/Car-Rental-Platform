@@ -12,6 +12,6 @@ import { RmqModule } from 'src/utils/rmq/rmq.module';
          imports: [DatabaseModule, ReservationModule, RedisModule, RmqModule],
     controllers: [CarController],
                   providers: [CarService, DatabaseService, ReservationService],
-    exports: [CarService],
+                 exports: [CarService],
 })
 export class CarModule {}
