@@ -36,6 +36,8 @@ lerna-debug.log*
 
 # extra folders
 /reports
+/uploads
+/src/uploads
 
 # env
 .env

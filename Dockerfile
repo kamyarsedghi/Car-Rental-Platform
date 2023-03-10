@@ -6,6 +6,8 @@ FROM node:18-alpine As development
 
 # Create app directory
 WORKDIR /usr/src/app
+# RUN chmod 0777 /usr/src/app
+# RUN mkdir /usr/src/app/uploads
 
 # Copy application dependency manifests to the container image.
 # A wildcard is used to ensure copying both package.json AND package-lock.json (when available).

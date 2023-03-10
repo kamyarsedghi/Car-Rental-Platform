@@ -4,11 +4,24 @@ import { ReservationService } from 'src/reservation/reservation.service';
 import { CarService } from './car.service';
 import { DateQueryDto } from './dto/dateQuery.dto';
 import { ApiOkResponse, ApiParam, ApiBadRequestResponse, ApiTags } from '@nestjs/swagger';
+import { RedisService } from 'src/utils/redis/redis.service';
+import { Ctx, MessagePattern, Payload, RmqContext } from '@nestjs/microservices';
+import { AddCarsDto } from './dto/addCars.dto';
 
 // @ApiExtraModels(DateQueryDto) or pass it on swagger module
 @Controller('car')
 export class CarController {
-    constructor(private readonly carService: CarService, private readonly reservationService: ReservationService) {}
+    constructor(private readonly carService: CarService, private readonly reservationService: ReservationService, private readonly redisService: RedisService) {}
+
+    @MessagePattern('import-cars-from-ms')
+    async hello(@Payload() data: AddCarsDto, @Ctx() context: RmqContext) {
+        const channel = context.getChannelRef();
+        const orginalMessage = context.getMessage();
+        // console.log('Received message:', data);
+        channel.ack(orginalMessage);
+        return this.carService.importCarsIntoDB(data);
+        // return 'Hello from car service';
+    }
 
     @ApiTags('Car')
     @ApiOkResponse({
@@ -39,6 +52,14 @@ export class CarController {
     @Get()
     async getAllReservationData() {
         return await this.carService.getAllReservationData();
+    }
+
+    @ApiTags('Car')
+    @ApiOkResponse({})
+    @ApiBadRequestResponse({})
+    @Get('faker-cars')
+    async addFakerCars(): Promise<void> {
+        return await this.carService.addFakerCars();
     }
 
     @ApiTags('Car')

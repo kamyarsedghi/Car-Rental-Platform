@@ -1,56 +1,86 @@
+/* eslint-disable @typescript-eslint/no-var-requires */
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ReservationService } from 'src/reservation/reservation.service';
 import { DatabaseService } from 'src/utils/database/database.service';
 import { DateQueryDto } from './dto/dateQuery.dto';
 import * as fs from 'fs-extra';
-import * as path from 'path';
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const ObjectsToCsv = require('objects-to-csv');
+import { RedisService } from 'src/utils/redis/redis.service';
+import { RmqService } from 'src/utils/rmq/rmq.service';
+import { faker } from '@faker-js/faker';
+import { AddCarsDto } from './dto/addCars.dto';
+
+const csvWriter = require('csv-write-stream');
 
 @Injectable()
 export class CarService {
-    constructor(private readonly databaseService: DatabaseService, private readonly reservationService: ReservationService) {}
+    constructor(
+        private readonly databaseService: DatabaseService,
+        private readonly reservationService: ReservationService,
+        private readonly redisService: RedisService,
+        private readonly rmqService: RmqService,
+    ) {}
 
     async getAllReservationData(): Promise<object> {
-        return await this.databaseService.executeQuery('SELECT * FROM reservations').then(result => {
-            return result.rows;
-        });
+        const result = await this.redisService.getOrSet(
+            '/car',
+            async () => {
+                const result = await this.databaseService.executeQuery('SELECT * FROM reservations');
+                // const msResponse = await this.rmqService.send('save-to-file', result.rows);
+                // console.log('Microservice response:', msResponse);
+                return result.rows;
+            },
+            10,
+        );
+        return result;
     }
 
     async getReservationData(id: number): Promise<object> {
-        return await this.databaseService.executeQuery(`SELECT * FROM reservations WHERE id = ${id}`).then(result => {
-            return result.rows[0];
-        });
+        const result = await this.redisService.getOrSet(
+            `/car/${id}`,
+            async () => {
+                const result = await this.databaseService.executeQuery(`SELECT * FROM reservations WHERE id = ${id}`);
+                return result.rows[0];
+            },
+            10,
+        );
+        return result;
     }
 
     async getCarUsage(carId: number): Promise<object> {
-        const monthName = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+        const result = await this.redisService.getOrSet(
+            `/car/usage/${carId}`,
+            async () => {
+                const monthName = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
-        const query = `SELECT * FROM reservations WHERE car_id = ${carId}`;
+                const query = `SELECT * FROM reservations WHERE car_id = ${carId}`;
 
-        const carData = await this.databaseService.executeQuery(query);
+                const carData = await this.databaseService.executeQuery(query);
 
-        const carUsage = carData.rows.reduce((acc, row) => {
-            const startDate = new Date(row.start_date);
-            const endDate = new Date(row.end_date);
-            const days = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 3600 * 24));
-            const month = startDate.getMonth();
-            if (acc[month]) {
-                acc[month].days += days;
-                acc[month].count++;
-            } else {
-                acc[month] = { days, count: 1 };
-            }
-            return acc;
-        }, {});
+                const carUsage = carData.rows.reduce((acc, row) => {
+                    const startDate = new Date(row.start_date);
+                    const endDate = new Date(row.end_date);
+                    const days = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 3600 * 24));
+                    const month = startDate.getMonth();
+                    if (acc[month]) {
+                        acc[month].days += days;
+                        acc[month].count++;
+                    } else {
+                        acc[month] = { days, count: 1 };
+                    }
+                    return acc;
+                }, {});
 
-        for (const month in carUsage) {
-            carUsage[month].percentage = ((carUsage[month].days / 30) * 100).toFixed(2);
-            carUsage[monthName[month]] = carUsage[month];
-            delete carUsage[month];
-        }
+                for (const month in carUsage) {
+                    carUsage[month].percentage = ((carUsage[month].days / 30) * 100).toFixed(2);
+                    carUsage[monthName[month]] = carUsage[month];
+                    delete carUsage[month];
+                }
 
-        return carUsage;
+                return carUsage;
+            },
+            10,
+        );
+        return result;
     }
 
     async getAllCarsUsage(dateQueryDto?: DateQueryDto): Promise<object> {
@@ -118,28 +148,48 @@ export class CarService {
                 return acc;
             }, {});
 
-        const toFile = Object.entries(sortedAllCarsUsage).map(([key, value]) => {
-            return {
-                month: key,
-                cars: Object.entries(value).map(([key, value]) => {
-                    return {
-                        car_id: key,
-                        ...value,
-                    };
-                }),
-            };
+        const msResponse = await this.rmqService.send('save-to-file', {
+            dateFrom,
+            dateTo,
+            exportType,
+            sortedAllCarsUsage,
         });
-
-        if (exportType === 'json') {
-            const filePathJson = path.join(__dirname, '..', '../reports', `${dateFrom.toISOString().split('T')[0]}-${dateTo.toISOString().split('T')[0]}-carsUsage.json`);
-            const json = JSON.stringify(toFile);
-            fs.writeFileSync(filePathJson, json);
-        } else if (exportType === 'csv') {
-            const filePathCSV = path.join(__dirname, '..', '../reports', `${dateFrom.toISOString().split('T')[0]}-${dateTo.toISOString().split('T')[0]}-carsUsage.csv`);
-            const csv = new ObjectsToCsv(toFile);
-            await csv.toDisk(filePathCSV);
-        }
+        console.log('Microservice response:', msResponse);
+        // await this.rmqService.send('save-to-file', {
+        //     exportType,
+        //     sortedAllCarsUsage,
+        // });
 
         return sortedAllCarsUsage;
+    }
+
+    async addFakerCars(): Promise<void> {
+        //fakerjs add 1000 cars with car_id, car_name, car_license_plate to file
+        const writer = csvWriter({ headers: ['car_id', 'car_name', 'car_license_plate'] });
+        const writableStream = fs.createWriteStream('cars.csv');
+        writer.pipe(writableStream);
+        for (let i = 1; i <= 1000; i++) {
+            writer.write({
+                car_id: i,
+                car_name: faker.vehicle.model(),
+                car_license_plate: faker.vehicle.vrm(),
+            });
+        }
+        writer.end();
+    }
+
+    async importCarsIntoDB(data: AddCarsDto): Promise<object> {
+        // const query = `COPY cars (car_id, car_name, car_license_plate) FROM '${__dirname}/cars.csv' DELIMITER ',' CSV HEADER`;
+        const query = `INSERT INTO cars (car_id, car_name, car_license_plate) VALUES `;
+        const values = data.list
+            .map(car => Object.values(car))
+            .map(car => `('${car[0]}', '${car[1]}', '${car[2]}')`)
+            .join(',');
+        // return { ready: true };
+        try {
+            return data.list.length ? await this.databaseService.executeQuery(`${query}${values}`) : { status: 'Import DONE' };
+        } catch (error) {
+            return { status: 'Import FAILED' };
+        }
     }
 }
