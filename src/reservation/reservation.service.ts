@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { DatabaseService } from 'src/utils/database/database.service';
+import { DatabaseService } from '../utils/database/database.service';
 
 @Injectable()
 export class ReservationService {

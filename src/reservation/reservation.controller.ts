@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Param, Post, UsePipes, ValidationPipe, HttpCode } from '@nestjs/common';
-import { CarDto } from 'src/car/dto/car.dto';
+import { CarDto } from '../car/dto/car.dto';
 import { ReservationService } from './reservation.service';
 import { ApiBody, ApiOkResponse, ApiParam, ApiTags, ApiCreatedResponse, ApiBadRequestResponse, ApiProduces } from '@nestjs/swagger';
 
