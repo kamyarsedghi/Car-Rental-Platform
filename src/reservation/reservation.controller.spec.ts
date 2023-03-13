@@ -91,7 +91,7 @@ describe('ReservationController', () => {
 
         it('should return car availability', async () => {
             const result = { carId: 1, availability: true };
-                     jest.spyOn(service, 'checkCarAvailability').mockImplementation(() => Promise.resolve(result));
+            jest.spyOn(service, 'checkCarAvailability').mockImplementation(() => Promise.resolve(result));
             expect(await controller.checkCarAvailability({ carId: 1, startDate: new Date('2020-02-25'), endDate: new Date('2020-02-31') })).toEqual({
                 carId: 1,
                 availability: true,
