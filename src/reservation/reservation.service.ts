@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { DatabaseService } from '../utils/database/database.service';
+import { CarDto } from 'src/car/dto/car.dto';
 
 @Injectable()
 export class ReservationService {
@@ -19,7 +20,7 @@ export class ReservationService {
         return this.totalRentalPrice(17) + (days - 17) * (1000 * 0.85);
     }
 
-    async checkCarAvailability(data): Promise<object> {
+    async checkCarAvailability(data: CarDto): Promise<object> {
         const { carId, startDate, endDate } = data;
         const startDateRestrict = new Date(startDate),
             endDateRestrict = new Date(endDate);
